@@ -141,44 +141,47 @@
         padding: 30px;
         width: 380px;
         backdrop-filter: blur(15px);
-        box-shadow: 0px 10px 40px rgba(0,0,0,0.5);
+        box-shadow: 0px 10px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.1);
         transition: 0.3s ease;
     }
 
     .card:hover {
         transform: translateY(-8px);
-        box-shadow: 0px 15px 60px rgba(0,0,0,0.6);
+        box-shadow: 0px 15px 60px rgba(0,0,0,0.6), inset 0 0 30px rgba(255,255,255,0.15);
     }
 
-    textarea {
+    input[type="text"] {
         width: 100%;
-        height: 130px;
         padding: 12px;
         border-radius: 10px;
         outline: none;
         border: none;
         font-size: 15px;
         margin-top: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    input[type="text"]::placeholder {
+        color: rgba(255, 255, 255, 0.6);
     }
 
     .btn {
-        margin-top: 20px;
-        width: 100%;
-        padding: 12px;
+        background: linear-gradient(45deg, #00aaff, #14c3ff);
+        color: white;
         border: none;
-        border-radius: 12px;
-        background: #00aaff;
-        color: #fff;
+        padding: 12px 24px;
+        border-radius: 10px;
         font-size: 16px;
-        font-weight: bold;
         cursor: pointer;
         transition: 0.3s ease;
-        box-shadow: 0px 4px 20px rgba(0,170,255,0.5);
+        margin-top: 20px;
+        margin-left: 50px;
     }
 
     .btn:hover {
-        background: #14c3ff;
-        box-shadow: 0px 6px 25px rgba(20,195,255,0.7);
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(0,170,255,0.5);
     }
 
     .result-line {
@@ -287,6 +290,7 @@
         .card {
             width: 100%;
             padding: 20px;
+            margin:10px;
         }
     }
 
@@ -302,11 +306,20 @@
 <div class="container">
 
     <!-- INPUT CARD -->
-    <div class="card">
-        <h2><i class="fas fa-edit"></i> Enter Text</h2>
-        <textarea id="tweetInput" placeholder="Type a text..."></textarea>
-        <button class="btn" onclick="analyzeText()"><i class="fas fa-search"></i> Analyze</button>
-    </div>
+   <!-- INPUT CARD -->
+<div class="card">
+    <h2><i class="fas fa-edit"></i> Enter Text</h2>
+
+    <input type="text" id="tweetInput" placeholder="Type a text or use mic...">
+
+    <!-- 🎤 MIC BUTTON (ADD HERE) -->
+    <button class="btn" id="micBtn">
+        <i class="fas fa-microphone"></i> Speak
+    </button>
+
+    <button class="btn" id="analyzeBtn">Analyze</button>
+</div>
+
 
     <!-- RESULT CARD -->
     <div class="card" id="resultCard">
@@ -329,8 +342,16 @@
 <script>
 async function analyzeText() {
     const tweet = document.getElementById("tweetInput").value;
+   
 
-    if (!tweet.trim()) return alert("Please enter a tweet.");
+    // 🚨 VALIDATION CHECK (ADD THIS)
+    if (!tweet.trim()) {
+        alert("Please enter some text or use the microphone 🎤");
+        return;
+    }
+
+
+  
 
     // Show spinner
     document.getElementById("spinner").style.display = "block";
@@ -352,6 +373,11 @@ async function analyzeText() {
 
         // Hide spinner
         document.getElementById("spinner").style.display = "none";
+
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
 
         document.getElementById("hate").innerText = data.hate_speech;
         document.getElementById("offensive").innerText = data.offensive_language;
@@ -382,6 +408,47 @@ async function analyzeText() {
         alert("An error occurred while analyzing the tweet. Please try again.");
     }
 }
+
+// Add event listener for button click
+document.getElementById("analyzeBtn").addEventListener("click", function() {
+    analyzeText();
+});
+// 🎤 Voice to Text
+const micBtn = document.getElementById("micBtn");
+const tweetInput = document.getElementById("tweetInput");
+
+let recognition;
+
+// Check browser support
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+
+    recognition.lang = 'en-IN'; // Indian English
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    micBtn.addEventListener("click", () => {
+        recognition.start();
+        micBtn.innerHTML = '<i class="fas fa-microphone"></i> Listening...';
+    });
+
+    recognition.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        tweetInput.value = spokenText;
+        micBtn.innerHTML = '<i class="fas fa-microphone"></i> Speak';
+    };
+
+    recognition.onerror = () => {
+        micBtn.innerHTML = '<i class="fas fa-microphone"></i> Speak';
+        alert("Could not recognize speech. Try again.");
+    };
+
+} else {
+    micBtn.disabled = true;
+    micBtn.innerText = "Speech not supported";
+}
+
 </script>
 
 </body>
